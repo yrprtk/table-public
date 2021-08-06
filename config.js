@@ -1,0 +1,11 @@
+let config = {};
+config.port = 80;
+config.dbURL = '',
+config.tokenKey = '';
+config.expAccessTokenMin = 60;
+config.expRefreshTokenMin = 300;
+config.cookieParserSecretKey = '';
+config.cookieHttpOnly = false;
+config.cookieSecure = false;
+config.cookieSameSite = false;
+module.exports = config;

@@ -1,0 +1,4 @@
+# Игнорировать все файлы в каталоге node_modules/
+node_modules/
+deploy/
+json/

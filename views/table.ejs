@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project</title>
+    <link href="data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAgAAAAAAAAAAAAAAAEAAAAAAAAAD///8AiJQ3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAERERERERERERERERERERERERERERERERERERERERERERERAREREREREREBEREREREREQERERERERERAAABEREREREBERAREREREQEREBERERERAREQEREREREAAAEREREREREREREREREREREREREREREREREREREREREREREREAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" rel="icon" type="image/x-icon" />
+    <style>
+        *{
+            font-family: Verdana, sans-serif; 
+            font-size: 11px;
+        }
+        body{
+            margin: 0 auto;
+            padding: 0 auto;
+        }
+        thead th{
+            color: white;
+            text-shadow: 2px 4px 3px rgba(0,0,0,0.3);
+            background-color: #379488;
+            position: sticky;
+            z-index: 10;
+            top: 0;    
+        }
+        table, th, td{
+            border: solid 1px rgb(201, 214, 216);
+            border-collapse: collapse;
+            padding: 5px 15px;
+        }
+        table tr:hover td, table tr:hover textarea, table tr:hover select, table tr:hover input{
+            background: #f8f8f8;
+        }
+        textarea:focus, select:focus, input:focus{
+            outline: none;
+        }   
+        tbody textarea, tbody select, tbody input{
+            border: 0px;
+            width: 100%;
+            resize: vertical;
+        }
+        label{
+            cursor:pointer;
+            font-size: 20px;
+        } 
+        .dropdown-filter-dropdown{
+            color: black;
+            text-shadow: none;
+            position: absolute !important;
+            bottom: 0;
+            right: 0;
+        }
+        .dropdown-filter-icon{
+            border: 0px !important;
+        }
+        .arrow-down{
+            border: solid white !important;
+            border-width: 0 3px 3px 0 !important;
+            transform: rotate(45deg) !important;
+        }
+        .hidden{
+            display: none;
+        }
+        table{
+            width: 3000px;
+        }
+
+
+    .resizer {
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 5px;
+        cursor: col-resize;
+        user-select: none;
+    }
+    </style>
+    <script src="static/ResizableTable/ResizableTable.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/autosize.js/4.0.2/autosize.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" />
+
+    <script src="static/excel-bootstrap-table-filter/excel-bootstrap-table-filter-bundle.js"></script>
+    <link rel="stylesheet" href="static/excel-bootstrap-table-filter/excel-bootstrap-table-filter-style.css" />
+</head>
+<body>
+    <div id="container"></div>
+</body>
+<script>
+    class CRUDtable {
+        constructor(config) {
+            this.config = config;
+        };
+        createTable() {
+            // CREATE A TABLE.
+            let table = document.createElement('table');
+            table.setAttribute('id', this.config.idTable);
+            // Add table header.     
+            let thead = document.createElement('thead');
+            table.appendChild(thead);
+            let tr = thead.insertRow(-1);
+            for (let headingKey in this.config.heading) {
+                let th = document.createElement('th');
+                th.innerHTML = this.config.heading[headingKey];
+                tr.appendChild(th);
+                if (headingKey==this.config.colWithId){
+                    th.setAttribute('style', 'display: none;');
+                }
+            }
+            let th = document.createElement('th');
+            let lbl = document.createElement('label');
+                lbl.setAttribute('onclick', `window.location.replace("/logout");`);
+                lbl.setAttribute('title', 'logout');
+                lbl.innerHTML = '➪';
+            th.appendChild(lbl);
+            tr.appendChild(th);
+            if(this.config.canCreateNew){    
+                this.addLabel(this.createLabel('Create', 'New', '✚', 'cursor:pointer; color:blue;'), tr, th);
+            }
+            // Add table body.
+            let tbody = document.createElement('tbody');
+            table.appendChild(tbody);
+            for (let dateKey in this.config.tableData) {
+                // Add rows.
+                tr = tbody.insertRow(-1);
+                for (let colKey in this.config.column) {
+                    let tabCell = tr.insertCell(-1);
+                    tabCell.innerHTML = String(this.config.tableData[dateKey][this.config.column[colKey]]).replaceAll('⁣', '⁣ <br><br>');
+                    if (colKey==this.config.colWithId){
+                        tabCell.setAttribute('style', 'display: none;');
+                    }
+                }
+                // Dynamically create and add elements to table cells with events.
+                let id = this.config.tableData[dateKey][this.config.column[this.config.colWithId]];
+                let td = document.createElement('td');
+                if(this.config.canUpdate){
+                    this.addLabel(this.createLabel('Cancel', id, '✖', 'display:none;'), tr, td);
+                    this.addLabel(this.createLabel('Save', id, '✔', 'display:none;'), tr, td);
+                    this.addLabel(this.createLabel('Update', id, '✐', ' color:orange;'), tr, td);
+                }
+                if(this.config.canDelete){
+                    this.addLabel(this.createLabel('Delete', id, '🗑', ' color:red;'), tr, td);
+                }
+            }
+            let div = document.getElementById(this.config.idContainer); // FINDE Container
+            // div.innerHTML = ''; // CLEAR Container
+            div.appendChild(table);    // ADD THE TABLE TO THE WEB PAGE.
+            this.renderExcelFilter();
+            createResizableTable(table);
+        };
+        createLabel(name, i, pic, style) {
+            let lbl = document.createElement('label');
+                lbl.setAttribute('onclick', `${this.config.appName}.${name}(this)`);
+                lbl.setAttribute('title', name + i);
+                lbl.setAttribute('id', name + i);
+                lbl.setAttribute('style', style);
+                lbl.innerHTML = pic;
+            return lbl;
+        };
+        addLabel(lbl, tr, td) {
+            tr.appendChild(td);
+            td.appendChild(lbl);
+        };
+        renderExcelFilter(){
+            this.dischargeExcelFilter();
+            $(`#${this.config.idTable}`).excelTableFilter();
+            for (let i = 0; i <= this.config.column.length; i++) {
+                if(!this.config.colWithFilter.includes(i)){
+                    $($('th')[i]).find('.dropdown-filter-dropdown').remove();
+                }
+            }
+        };
+        dischargeExcelFilter(){
+            for (let i = 1; i <= document.getElementsByTagName("tbody")[0].rows.length; i++) {
+                document.getElementsByTagName("tr")[i].removeAttribute('style');
+            }
+        };
+        getByIdAndSetStyle(id, style){
+            document.getElementById(id).setAttribute('style', style);
+        };
+        getDataType(td, col, id){
+            let getDataType2 = new Function('td', 'col', 'id', 'typeArr', this.config.condition);
+            return getDataType2(td, col, id, this.config.typeArr);
+        }
+        // ****** OPERATIONS START.
+        // DELETE.
+        async Delete(oButton){
+            let tr = oButton.parentNode.parentNode;
+            let id = oButton.id.replace('Delete','');
+            if (id!='New'){
+                if(!confirm('Вы действительно хотите удалить проэкт?')){return}
+                try {
+                    let res = await fetch(this.config.fetchURL+id, {method: 'DELETE'});
+                    if (res.status!='200'){ throw new Error(await res.text());}
+                } catch (error) {
+                    return alert(error);
+                }
+            } else if (id=='New'){
+                this.getByIdAndSetStyle('CreateNew', 'pointer-events: auto; color:blue;');// ENABLE CREATE BUTTON
+            }
+            tr.remove();
+            this.renderExcelFilter();
+        };
+        // CANCEL.
+        Cancel(oButton){
+            let tr = oButton.parentNode.parentNode;
+            let id = oButton.id.replace('Cancel','');
+            // REPLACE ENTERED DATA TO OLD.
+            for (let key in this.config.column) {
+                var td = tr.getElementsByTagName("td")[key];
+                var hidden = td.getElementsByClassName("hidden")[0];
+                td.innerHTML = hidden.innerText;
+            }
+            this.getByIdAndSetStyle('Cancel'+id, 'display:none;'); // HIDE CANCEL BUTTON.
+            this.getByIdAndSetStyle('Save'+id, 'display:none;');// HIDE SAVE BUTTON.
+            this.getByIdAndSetStyle('Update'+id, 'display:block;   color:orange');// SHOW UPDATE BUTTON.
+        };
+        // EDIT DATA.
+        Update(oButton){
+            let tr = oButton.parentNode.parentNode;
+            let id = oButton.id.replace('Update','');
+            this.createAddEditForm(tr, id);
+            this.getByIdAndSetStyle('Cancel'+id, 'display:block;  color:red;'); // SHOW CANCEL BUTTON.
+            this.getByIdAndSetStyle('Save'+id, 'display:block;  color:green;');// SHOW SAVE BUTTON.
+            this.getByIdAndSetStyle('Update'+id, 'display:none;');// HIDE UPDATE BUTTON
+        };
+        // CREATE NEW.
+        Create(oButton){
+            let tbody = document.getElementsByTagName("tbody")[0];
+            let tr = tbody.insertRow(-1);
+            for (let columnKey in this.config.column) {
+                let tabCell = tr.insertCell(-1);
+                if (columnKey==this.config.colWithId){
+                    tabCell.setAttribute('style', 'display: none;');
+                }
+            }
+            let td = document.createElement('td');
+            this.addLabel(this.createLabel('Save', 'New', '✔', ' color:green;'), tr, td);
+            this.addLabel(this.createLabel('Delete', 'New', '🗑', ' color:red;'), tr, td);
+            this.createAddEditForm(tr, 'New');
+            tbody.lastChild.scrollIntoView({block: "center", behavior: "smooth"});
+            this.getByIdAndSetStyle('CreateNew', 'pointer-events: none; color:#b3b3b3;');// DISABLE CREATE BUTTON
+        };
+        // SAVE DATA.
+        async Save(oButton){
+            let tr = oButton.parentNode.parentNode;
+            let id = oButton.id.replace('Save','');
+
+            let obj = {};
+            // UPDATE myBooks ARRAY WITH VALUES.
+            for (let key in this.config.column) {
+                let td = tr.getElementsByTagName("td")[key];
+                let txtPrevVal = td.childNodes[0].innerText.trim()
+                let txtVal = td.childNodes[1].value.trim();      // SAVE THE VALUE.
+
+                switch (this.getDataType(tr.getElementsByTagName("td"), key, id)){
+                    case 'writeOnly': txtVal = txtVal=='' ? txtPrevVal: txtPrevVal+' '+new Date().toJSON().substring(0,19).replace('T',' ')+' '+txtVal+'⁣ '; break;
+                    case 'reedOnly': txtVal = txtPrevVal=='' ? ' ': txtPrevVal; break;
+                    default: txtVal = txtVal; 
+                }  
+                if (txtVal == '') { 
+                    alert('all fields are compulsory'); obj = ''; break;
+                } else { 
+                    obj[this.config.column[key]] = txtVal; 
+                }   
+            }
+            if (Object.keys(obj).length > 0) {      // CHECK IF OBJECT IS NOT EMPTY. 
+                let formBody = [];
+                for (let key in obj) {
+                    if(!((key==this.config.nameColWithId)&&id=='New')){
+                        let encodedKey = encodeURIComponent(key);
+                        let encodedValue = encodeURIComponent(obj[key]);
+                        formBody.push(encodedKey + "=" + encodedValue);
+                    }
+                }
+                formBody = formBody.join("&");
+                if (id!='New'){
+                try {
+                    let res = await fetch(this.config.fetchURL+id, {method: 'PATCH', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: formBody });
+                    if (res.status!='200'){ throw new Error(await res.text());}
+                } catch (error) {
+                    return alert(error);
+                }
+                this.getByIdAndSetStyle('Cancel'+id, 'display:none;'); // HIDE CANCEL BUTTON.
+                this.getByIdAndSetStyle('Save'+id, 'display:none;');// HIDE SAVE BUTTON.
+                this.getByIdAndSetStyle('Update'+id, 'display:block;   color:orange');// SHOW UPDATE BUTTON.
+                }else if (id=='New'){
+                    try {
+                        let res = await fetch(this.config.fetchURL, {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: formBody });
+                        if (res.status!='200'){ throw new Error(await res.text());}
+                        id = (await res.text()).replaceAll('"','');
+                    } catch (error) {
+                        return alert(error);
+                    }
+                    obj[this.config.column[this.config.colWithId]]=id;
+                    tr.lastChild.remove();
+                    let td = document.createElement('td');
+                    if(this.config.canUpdate){
+                        this.addLabel(this.createLabel('Cancel', id, '✖', 'display:none;'), tr, td);
+                        this.addLabel(this.createLabel('Save', id, '✔', 'display:none;'), tr, td);
+                        this.addLabel(this.createLabel('Update', id, '✐', ' color:orange;'), tr, td);
+                    }
+                    if(this.config.canDelete){
+                        this.addLabel(this.createLabel('Delete', id, '🗑', ' color:red;'), tr, td);
+                    }
+                    this.getByIdAndSetStyle('CreateNew', 'pointer-events: auto; color:blue;');// ENABLE CREATE BUTTON
+                }
+                let objArr = Object.values(obj);
+                for (let objArrKey in objArr) {
+                    var td = tr.getElementsByTagName("td")[objArrKey];
+                    td.innerText= String(objArr[objArrKey]).replaceAll('⁣', '⁣ \n\n');
+                }
+                this.renderExcelFilter();
+            }
+        };
+        // ****** OPERATIONS END.
+        createAddEditForm(tr, id){
+            for (let i in this.config.column) {
+                let td = tr.getElementsByTagName("td")[i]; let ele; let hidden;
+                switch (this.getDataType(tr.getElementsByTagName("td"), i, id)){
+                    case 'date':
+                        let date = td.innerText.trim()!="" ? td.innerText.trim() : new Date().toISOString().slice(0, 10);
+                        ele = document.createElement('input');
+                        ele.setAttribute('type', 'date');
+                        ele.setAttribute('value', date);
+                        break;
+                    case 'number':
+                        ele = document.createElement('input');
+                        ele.setAttribute('type', 'number');
+                        ele.setAttribute('value', td.innerText);
+                        break;
+                    case 'percent':
+                        ele = document.createElement('input');
+                        ele.setAttribute('type', 'number');
+                        ele.setAttribute('min', '0');
+                        ele.setAttribute('max', '100');
+                        ele.setAttribute('value', td.innerText);
+                        break;
+                    case 'email':
+                        ele = document.createElement('input');
+                        ele.setAttribute('type', 'email');
+                        ele.setAttribute('placeholder', 'mail@example.com');
+                        ele.setAttribute('value', td.innerText);
+                        break;
+                    case 'tel':
+                        ele = document.createElement('input');
+                        ele.setAttribute('type', 'tel');
+                        ele.setAttribute('placeholder', '+380661122333');
+                        ele.setAttribute('value', td.innerText);
+                        break;
+                    case 'checkbox':
+                        ele = document.createElement('input');
+                        ele.setAttribute('type', 'checkbox');
+                        (td.innerText == 'true') ? ele.setAttribute('checked', td.innerText) : false;
+                        break;
+                    case 'reedOnly':
+                        ele = document.createElement('textarea');
+                        ele.setAttribute('readonly', 'true');
+                        ele.innerHTML = td.innerText;
+                        break;
+                    case 'writeOnly':
+                        ele = document.createElement('textarea');
+                        break;
+                    case 'select':
+                        ele = document.createElement('select');
+                        ele.setAttribute('onchange' , `${this.config.appName}.onchangeSelect(this.id)`);
+                        ele.setAttribute('id', this.config.column[i]+id);
+                        for (let key in this.config[this.config.column[i]]) {
+                            ele.innerHTML = ele.innerHTML + '<option value="' + this.config[this.config.column[i]][key] + (td.innerText==this.config[this.config.column[i]][key] ? '" selected>' : '">') + this.config[this.config.column[i]][key] + '</option>';
+                        }
+                        break;
+                    case 'selectRelatedPrev':
+                        let prevSelectId = tr.getElementsByTagName("td")[i-1].getElementsByTagName("select")[0].id;
+                        let indexPrevSelect = this.config[this.config.column[i-1]].indexOf(document.getElementById(prevSelectId).value);
+                        ele = document.createElement('select');
+                        ele.setAttribute('id', this.config.column[i]+id);
+                        for (let key in this.config[this.config.column[i]][indexPrevSelect]) {
+                            ele.innerHTML = ele.innerHTML + '<option value="' + this.config[this.config.column[i]][indexPrevSelect][key] + (td.innerText==this.config[this.config.column[i]][indexPrevSelect][key] ? '" selected>' : '">') + this.config[this.config.column[i]][indexPrevSelect][key] + '</option>';
+                        }
+                        break;
+                    default:
+                        ele = document.createElement('textarea');
+                        ele.innerHTML = td.innerText;
+                }
+                hidden = document.createElement('div');
+                hidden.innerText = td.innerText;
+                hidden.className = 'hidden';
+                td.innerText = '';
+                td.appendChild(hidden);
+                td.appendChild(ele);
+            }
+            autosize(document.getElementsByTagName('textarea'));
+        };
+        onchangeSelect(changeId){
+            for(let key in this.config.selectPair){
+                if(changeId.includes(this.config.selectPair[key][0])){
+                    let relatedSelectName = this.config.selectPair[key][1];
+                    let mainSelectName = this.config.selectPair[key][0];
+                    let id = changeId.replace(mainSelectName,'');
+                    let mainSelectValue = document.getElementById(changeId).value;
+                    let index = this.config[mainSelectName].indexOf(mainSelectValue);
+                    let relatedSelectArr = this.config[relatedSelectName][index];
+                    let ele = document.getElementById(relatedSelectName+id);
+                    ele.options.length = 0;
+                    for (key in relatedSelectArr) {
+                        ele.innerHTML = ele.innerHTML + '<option value="' + relatedSelectArr[key] +  '">' + relatedSelectArr[key] + '</option>';
+                    }
+                    break;
+                }
+            };
+        };
+    }
+    let table = new CRUDtable(<%-config%>);
+    table.createTable();
+</script>
+</html>
